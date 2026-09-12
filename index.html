@@ -41,12 +41,15 @@
     .key:nth-child(3n+2) { background:#e5f8ef; color:#18845e; box-shadow:0 4px 0 #92d0b8; }
     .key:nth-child(3n) { background:#fff0bc; color:#9d7200; box-shadow:0 4px 0 #edcc68; }
     .key:active,.action:active { transform:translateY(3px); box-shadow:0 1px 0 currentColor; }
+    .hint-key { grid-column:1; font-size:1.35rem; background:#fff0bc !important; color:#9d7200 !important; box-shadow:0 4px 0 #edcc68 !important; }
     .back { grid-column:3; font-size:1.3rem; background:#ffe1ea !important; color:#ba4167 !important; box-shadow:0 4px 0 #f1a9be !important; }
     .zero { grid-column:2; }
-    .action-row { display:grid; grid-template-columns:1fr 2fr; gap:9px; margin-top:12px; }
-    .action { min-height:61px; border-radius:17px; color:#fff; box-shadow:0 5px 0 #3e2b99; background:var(--purple); font-size:1.35rem; }
-    .new { background:var(--mint); color:#164f3e; box-shadow:0 5px 0 #42a681; font-size:1rem; }
-    .sound { position:absolute; top:16px; right:16px; width:44px; height:44px; border-radius:50%; background:#fffdf8; color:#6547d8; box-shadow:0 4px 0 #b9a9e4; font-size:1.35rem; }
+    .action-row { margin-top:12px; }
+    .action { width:100%; min-height:61px; border-radius:17px; color:#fff; box-shadow:0 5px 0 #3e2b99; background:var(--purple); font-size:1.35rem; }
+    .sound,.settings { position:absolute; top:16px; width:44px; height:44px; border-radius:50%; background:#fffdf8; color:#6547d8; box-shadow:0 4px 0 #b9a9e4; font-size:1.35rem; }
+    .sound { right:16px; }.settings { left:16px; }
+    .settings-panel { position:absolute; z-index:5; top:66px; left:14px; width:175px; padding:9px; border-radius:16px; background:#fffdf8; box-shadow:0 7px 20px #39247144; }
+    .settings-panel button { width:100%; border-radius:10px; padding:11px 8px; background:#e5f8ef; color:#165a42; font-size:.92rem; }
     .install { margin-top:12px; width:100%; min-height:47px; border-radius:14px; background:#fff0bc; color:#745400; box-shadow:0 4px 0 #edcc68; font-size:1rem; }
     .install[hidden] { display:none; }
     .progress { margin:17px 4px 0; }
@@ -72,7 +75,9 @@
 </head>
 <body>
   <main>
+    <button class="settings" id="settings" aria-label="Open game settings" aria-expanded="false">⚙️</button>
     <button class="sound" id="sound" aria-label="Turn sounds off">🔊</button>
+    <div class="settings-panel" id="settingsPanel" hidden><button id="newNumber">↻ New secret number</button></div>
     <h1 class="brand">Secret <span>Number Hunt</span></h1>
     <p class="tagline">Can you crack the super-secret number?</p>
     <section class="stats" aria-label="Game status">
@@ -88,16 +93,16 @@
         <button class="key" data-digit="1">1</button><button class="key" data-digit="2">2</button><button class="key" data-digit="3">3</button>
         <button class="key" data-digit="4">4</button><button class="key" data-digit="5">5</button><button class="key" data-digit="6">6</button>
         <button class="key" data-digit="7">7</button><button class="key" data-digit="8">8</button><button class="key" data-digit="9">9</button>
-        <button class="key zero" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
+        <button class="key hint-key" id="hintButton" aria-label="Give me a hint">💡</button><button class="key zero" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
       </div>
-      <div class="action-row"><button class="action new" id="newGame">New number</button><button class="action" id="guess">Make a guess!</button></div>
+      <div class="action-row"><button class="action" id="guess">Make a guess!</button></div>
       <button class="install" id="install" hidden>📲 Put this game on my home screen</button>
       <div class="progress"><div class="progress-top"><span>Number journey</span><span id="power">Up to 2 digits</span></div><div id="path" class="path" aria-label="Number journey progress"></div></div>
     </section>
     <p class="tiny">Tip: every new level brings a slightly bigger number range!</p>
   </main>
   <div id="confetti" class="confetti" aria-hidden="true"></div>
-  <dialog id="win"><h2>🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
+  <dialog id="win"><h2 id="winTitle">🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
   <script>
     const RANGES = [10n, 25n, 50n, 100n, 250n, 500n, 1000n, 2500n, 5000n, 10000n, 25000n, 50000n, 100000n, 250000n, 500000n, 1000000n, 2500000n, 5000000n, 10000000n, 25000000n, 50000000n, 100000000n, 250000000n, 500000000n, 1000000000n, 2500000000n, 5000000000n, 10000000000n, 25000000000n, 50000000000n, 100000000000n, 250000000000n, 500000000000n, 999999999999n];
     const maxLevel = RANGES.length, $ = id => document.getElementById(id);
@@ -125,6 +130,12 @@
     }
     function startRound() { secret = randomTo(limit()); attempts = 0; input = ''; finished = false; setHint('Make your first guess!', '🔎'); refresh(); }
     function addDigit(d) { if (finished || input.length >= limit().toString().length) return; input = input === '0' ? d : input + d; refresh(); }
+    function giveHint() {
+      if (finished) return;
+      const digits = secret.toString().length, even = secret % 2n === 0n;
+      setHint(`Hint: ${digits} digit${digits === 1 ? '' : 's'} and ${even ? 'even' : 'odd'}!`, '💡');
+      speak(`Hint. It has ${digits} digits and is ${even ? 'even' : 'odd'}`);
+    }
     function makeGuess() {
       if (finished || !input) { setHint('Choose some digits first!', '👆'); speak('Choose some digits first'); return; }
       const value = BigInt(input);
@@ -132,14 +143,19 @@
       attempts++;
       if (value === secret) {
         finished = true; const points = Math.max(25, (level * 160) - ((attempts - 1) * 15)); score += points;
+        const finalLevel = level === maxLevel;
         setHint('Exactly right!', '🎉'); celebrate(); refresh();
-        $('winText').innerHTML = `You found <b>${commas(secret)}</b> in <b>${attempts}</b> guesses and earned <b>${points}</b> points!`;
+        $('winTitle').textContent = finalLevel ? '🏆 Number Journey complete!' : '🎉 You found it!';
+        $('winText').innerHTML = finalLevel ? `You found the final giant number, <b>${commas(secret)}</b>! Your adventure score is <b>${score}</b>. You are a Number Explorer!` : `You found <b>${commas(secret)}</b> in <b>${attempts}</b> guesses and earned <b>${points}</b> points!`;
+        $('next').textContent = finalLevel ? 'Start a new adventure →' : 'Next giant challenge →';
         $('win').showModal(); speak(`You found it! ${commas(secret)}. Amazing!`);
       } else { const bigger = value < secret; setHint(bigger ? 'Go bigger!' : 'Go smaller!', bigger ? '🚀 ↑' : '🎈 ↓'); input = ''; refresh(); speak(bigger ? 'Try a bigger number' : 'Try a smaller number'); }
     }
     document.querySelectorAll('[data-digit]').forEach(b => b.onclick = () => addDigit(b.dataset.digit));
     $('back').onclick = () => { input = input.slice(0,-1); refresh(); };
-    $('guess').onclick = makeGuess; $('newGame').onclick = startRound;
+    $('hintButton').onclick = giveHint; $('guess').onclick = makeGuess;
+    $('settings').onclick = () => { const open = $('settingsPanel').hidden; $('settingsPanel').hidden = !open; $('settings').setAttribute('aria-expanded', String(open)); };
+    $('newNumber').onclick = () => { $('settingsPanel').hidden = true; $('settings').setAttribute('aria-expanded', 'false'); startRound(); };
     $('sound').onclick = () => { soundOn = !soundOn; $('sound').textContent = soundOn ? '🔊' : '🔇'; $('sound').setAttribute('aria-label', soundOn ? 'Turn sounds off' : 'Turn sounds on'); if (!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
     addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; $('install').hidden = false; });
     $('install').onclick = async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; };

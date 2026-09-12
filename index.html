@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Secret Number Hunt</title>
+  <style>
+    :root { --ink:#18203c; --purple:#6547d8; --purple2:#8b65ff; --yellow:#ffd85a; --mint:#77e2bc; --pink:#ff7fa8; --paper:#fffdf8; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif; background:radial-gradient(circle at 9% 10%,#fff0a7 0 8%,transparent 8.5%),radial-gradient(circle at 92% 16%,#d6c7ff 0 11%,transparent 11.5%),linear-gradient(145deg,#f5f0ff,#e8fbf4); }
+    main { width:min(680px,100%); margin:auto; padding:22px 18px 36px; text-align:center; }
+    .brand { font-size:clamp(2rem,7vw,3.8rem); line-height:.95; letter-spacing:-.06em; margin:4px 0 4px; }
+    .brand span { color:var(--purple); }
+    .tagline { margin:0 0 18px; font-weight:800; color:#585875; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px; }
+    .stat { background:#fff; border:3px solid #fff; border-radius:18px; padding:10px 5px 8px; box-shadow:0 5px 0 #d8d0ee; }
+    .stat b { display:block; color:var(--purple); font-size:clamp(1.25rem,5vw,1.75rem); line-height:1.05; }
+    .stat span { font-size:.68rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:#686579; }
+    .card { background:var(--paper); border:4px solid white; border-radius:28px; padding:17px; box-shadow:0 10px 0 #d9d0ed; }
+    .range { font-size:clamp(1.1rem,4.2vw,1.45rem); font-weight:900; margin:0; }
+    .range strong { color:var(--purple); }
+    .hint { min-height:60px; margin:11px 0 10px; display:grid; place-content:center; color:#fff; background:var(--purple); border-radius:18px; font-size:clamp(1.3rem,5.4vw,1.95rem); font-weight:900; line-height:1.1; padding:8px 14px; }
+    .guess-display { min-height:67px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:3px dashed #c8bcea; border-radius:17px; background:#f9f6ff; font-size:clamp(2rem,9vw,3.6rem); letter-spacing:.04em; font-weight:900; color:var(--ink); padding:4px 12px; }
+    .guess-display.empty { color:#a8a0be; font-size:1.2rem; letter-spacing:0; }
+    .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:13px; }
+    button { border:0; font:inherit; font-weight:900; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+    .key { min-height:58px; background:#eee8ff; color:var(--purple); border-radius:16px; box-shadow:0 4px 0 #c5b5ee; font-size:1.7rem; }
+    .key:active,.action:active { transform:translateY(3px); box-shadow:0 1px 0 currentColor; }
+    .clear { font-size:1rem; background:#ffe1ea; color:#ba4167; box-shadow:0 4px 0 #f1a9be; }
+    .back { font-size:1.3rem; background:#fff0bc; color:#9d7200; box-shadow:0 4px 0 #edcc68; }
+    .action-row { display:grid; grid-template-columns:1fr 2fr; gap:9px; margin-top:12px; }
+    .action { min-height:61px; border-radius:17px; color:#fff; box-shadow:0 5px 0 #3e2b99; background:var(--purple); font-size:1.35rem; }
+    .new { background:var(--mint); color:#164f3e; box-shadow:0 5px 0 #42a681; font-size:1rem; }
+    .progress { margin:17px 4px 0; }
+    .progress-top { display:flex; justify-content:space-between; font-size:.83rem; font-weight:900; margin-bottom:6px; }
+    .track { height:13px; background:#ddd5ef; border-radius:20px; overflow:hidden; }
+    .fill { height:100%; width:9%; border-radius:inherit; background:linear-gradient(90deg,var(--yellow),var(--pink)); transition:width .35s; }
+    dialog { width:min(430px,90vw); border:0; border-radius:27px; color:var(--ink); text-align:center; padding:28px 20px 22px; box-shadow:0 18px 55px #2b215a88; }
+    dialog::backdrop { background:#25165388; backdrop-filter:blur(3px); }
+    dialog h2 { font-size:2.1rem; margin:0 0 8px; }
+    dialog p { font-size:1.13rem; font-weight:700; line-height:1.45; }
+    .next { width:100%; margin-top:5px; background:var(--purple); color:#fff; border-radius:16px; padding:15px; font-size:1.25rem; box-shadow:0 5px 0 #3e2b99; }
+    .tiny { font-size:.83rem; color:#69627e; font-weight:700; margin:14px 0 0; }
+    @media (min-width:650px) { main { padding-top:35px; } .card { padding:21px 33px; } .key { min-height:64px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="brand">Secret <span>Number Hunt</span></h1>
+    <p class="tagline">Can you crack the super-secret number?</p>
+    <section class="stats" aria-label="Game status">
+      <div class="stat"><b id="level">1</b><span>Level</span></div>
+      <div class="stat"><b id="attempts">0</b><span>Guesses</span></div>
+      <div class="stat"><b id="score">0</b><span>Score</span></div>
+    </section>
+    <section class="card" aria-label="Number guessing game">
+      <p class="range">Find a number from <strong id="range">1 to 100</strong></p>
+      <div id="hint" class="hint" role="status" aria-live="polite">Make your first guess!</div>
+      <div id="display" class="guess-display empty" aria-label="Your current guess">Tap the numbers below</div>
+      <div class="pad" aria-label="Number pad">
+        <button class="key" data-digit="1">1</button><button class="key" data-digit="2">2</button><button class="key" data-digit="3">3</button>
+        <button class="key" data-digit="4">4</button><button class="key" data-digit="5">5</button><button class="key" data-digit="6">6</button>
+        <button class="key" data-digit="7">7</button><button class="key" data-digit="8">8</button><button class="key" data-digit="9">9</button>
+        <button class="key clear" id="clear">Clear</button><button class="key" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
+      </div>
+      <div class="action-row"><button class="action new" id="newGame">New number</button><button class="action" id="guess">Make a guess!</button></div>
+      <div class="progress"><div class="progress-top"><span>Number power</span><span id="power">2 digits</span></div><div class="track"><div id="fill" class="fill"></div></div></div>
+    </section>
+    <p class="tiny">Tip: the secret gets 10 times bigger at every level!</p>
+  </main>
+  <dialog id="win"><h2>🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
+  <script>
+    const maxLevel = 11, $ = id => document.getElementById(id);
+    let level = 1, attempts = 0, score = 0, input = '', secret, finished = false;
+    const limit = () => 10n ** BigInt(level + 1) - 1n;
+    const commas = n => n.toLocaleString('en-US');
+    function randomTo(max) { // cryptographically random BigInt from 1 through max
+      const bytes = Math.ceil(max.toString(2).length / 8), ceiling = 1n << BigInt(bytes * 8), cutoff = ceiling - (ceiling % max);
+      let value;
+      do { const a = new Uint8Array(bytes); crypto.getRandomValues(a); value = a.reduce((n,b) => (n << 8n) + BigInt(b), 0n); } while (value >= cutoff);
+      return value % max + 1n;
+    }
+    function speak(words) { if ('speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(words)); } }
+    function refresh() {
+      $('level').textContent = level; $('attempts').textContent = attempts; $('score').textContent = score;
+      $('range').textContent = `1 to ${commas(limit())}`; $('power').textContent = `${level + 1} digits`;
+      $('fill').style.width = `${(level / maxLevel) * 100}%`;
+      $('display').textContent = input ? commas(BigInt(input)) : 'Tap the numbers below';
+      $('display').classList.toggle('empty', !input);
+    }
+    function startRound() { secret = randomTo(limit()); attempts = 0; input = ''; finished = false; $('hint').textContent = 'Make your first guess!'; refresh(); }
+    function addDigit(d) { if (finished || input.length >= level + 1) return; input = input === '0' ? d : input + d; refresh(); }
+    function makeGuess() {
+      if (finished || !input) { $('hint').textContent = 'Choose some digits first!'; speak('Choose some digits first'); return; }
+      const value = BigInt(input);
+      if (value < 1n || value > limit()) { $('hint').textContent = 'That number is outside the range!'; speak('That number is outside the range'); return; }
+      attempts++;
+      if (value === secret) {
+        finished = true; const points = Math.max(25, (level * 160) - ((attempts - 1) * 15)); score += points;
+        $('hint').textContent = 'Exactly right!'; refresh();
+        $('winText').innerHTML = `You found <b>${commas(secret)}</b> in <b>${attempts}</b> guesses and earned <b>${points}</b> points!`;
+        $('win').showModal(); speak(`You found it! ${commas(secret)}. Amazing!`);
+      } else { const word = value < secret ? 'Bigger ↑' : 'Smaller ↓'; $('hint').textContent = word; input = ''; refresh(); speak(value < secret ? 'Try a bigger number' : 'Try a smaller number'); }
+    }
+    document.querySelectorAll('[data-digit]').forEach(b => b.onclick = () => addDigit(b.dataset.digit));
+    $('clear').onclick = () => { input = ''; refresh(); }; $('back').onclick = () => { input = input.slice(0,-1); refresh(); };
+    $('guess').onclick = makeGuess; $('newGame').onclick = startRound;
+    $('next').onclick = () => { $('win').close(); if (level < maxLevel) level++; else { level = 1; score = 0; } startRound(); };
+    addEventListener('keydown', e => { if (/^\d$/.test(e.key)) addDigit(e.key); else if (e.key === 'Enter') makeGuess(); else if (e.key === 'Backspace') { input = input.slice(0,-1); refresh(); } });
+    startRound();
+  </script>
+</body>
+</html>

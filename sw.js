@@ -1,4 +1,4 @@
-const CACHE = 'secret-number-hunt-v6';
+const CACHE = 'secret-number-hunt-v7';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg?v=2', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './apple-touch-icon-167.png', './apple-touch-icon-152.png'];
 
 self.addEventListener('install', event => {

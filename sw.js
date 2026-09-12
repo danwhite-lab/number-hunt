@@ -1,5 +1,5 @@
-const CACHE = 'secret-number-hunt-v4';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'secret-number-hunt-v5';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg?v=2'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));

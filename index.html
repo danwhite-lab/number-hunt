@@ -3,6 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6547d8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
   <title>Secret Number Hunt</title>
   <style>
     :root { --ink:#18203c; --purple:#6547d8; --purple2:#8b65ff; --yellow:#ffd85a; --mint:#77e2bc; --pink:#ff7fa8; --paper:#fffdf8; }
@@ -31,6 +37,8 @@
     .action-row { display:grid; grid-template-columns:1fr 2fr; gap:9px; margin-top:12px; }
     .action { min-height:61px; border-radius:17px; color:#fff; box-shadow:0 5px 0 #3e2b99; background:var(--purple); font-size:1.35rem; }
     .new { background:var(--mint); color:#164f3e; box-shadow:0 5px 0 #42a681; font-size:1rem; }
+    .install { margin-top:12px; width:100%; min-height:47px; border-radius:14px; background:#fff0bc; color:#745400; box-shadow:0 4px 0 #edcc68; font-size:1rem; }
+    .install[hidden] { display:none; }
     .progress { margin:17px 4px 0; }
     .progress-top { display:flex; justify-content:space-between; font-size:.83rem; font-weight:900; margin-bottom:6px; }
     .track { height:13px; background:#ddd5ef; border-radius:20px; overflow:hidden; }
@@ -64,6 +72,7 @@
         <button class="key clear" id="clear">Clear</button><button class="key" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
       </div>
       <div class="action-row"><button class="action new" id="newGame">New number</button><button class="action" id="guess">Make a guess!</button></div>
+      <button class="install" id="install" hidden>📲 Put this game on my home screen</button>
       <div class="progress"><div class="progress-top"><span>Number power</span><span id="power">2 digits</span></div><div class="track"><div id="fill" class="fill"></div></div></div>
     </section>
     <p class="tiny">Tip: the secret gets 10 times bigger at every level!</p>
@@ -72,6 +81,7 @@
   <script>
     const maxLevel = 11, $ = id => document.getElementById(id);
     let level = 1, attempts = 0, score = 0, input = '', secret, finished = false;
+    let installPrompt;
     const limit = () => 10n ** BigInt(level + 1) - 1n;
     const commas = n => n.toLocaleString('en-US');
     function randomTo(max) { // cryptographically random BigInt from 1 through max
@@ -105,6 +115,9 @@
     document.querySelectorAll('[data-digit]').forEach(b => b.onclick = () => addDigit(b.dataset.digit));
     $('clear').onclick = () => { input = ''; refresh(); }; $('back').onclick = () => { input = input.slice(0,-1); refresh(); };
     $('guess').onclick = makeGuess; $('newGame').onclick = startRound;
+    addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; $('install').hidden = false; });
+    $('install').onclick = async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; };
+    if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
     $('next').onclick = () => { $('win').close(); if (level < maxLevel) level++; else { level = 1; score = 0; } startRound(); };
     addEventListener('keydown', e => { if (/^\d$/.test(e.key)) addDigit(e.key); else if (e.key === 'Enter') makeGuess(); else if (e.key === 'Backspace') { input = input.slice(0,-1); refresh(); } });
     startRound();

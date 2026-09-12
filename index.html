@@ -62,7 +62,7 @@
       <div class="stat"><b id="score">0</b><span>Score</span></div>
     </section>
     <section class="card" aria-label="Number guessing game">
-      <p class="range">Find a number from <strong id="range">1 to 100</strong></p>
+      <p class="range">Find a number from <strong id="range">1 to 10</strong></p>
       <div id="hint" class="hint" role="status" aria-live="polite">Make your first guess!</div>
       <div id="display" class="guess-display empty" aria-label="Your current guess">Tap the numbers below</div>
       <div class="pad" aria-label="Number pad">
@@ -73,16 +73,17 @@
       </div>
       <div class="action-row"><button class="action new" id="newGame">New number</button><button class="action" id="guess">Make a guess!</button></div>
       <button class="install" id="install" hidden>📲 Put this game on my home screen</button>
-      <div class="progress"><div class="progress-top"><span>Number power</span><span id="power">2 digits</span></div><div class="track"><div id="fill" class="fill"></div></div></div>
+      <div class="progress"><div class="progress-top"><span>Number power</span><span id="power">Up to 2 digits</span></div><div class="track"><div id="fill" class="fill"></div></div></div>
     </section>
-    <p class="tiny">Tip: the secret gets 10 times bigger at every level!</p>
+    <p class="tiny">Tip: every new level brings a slightly bigger number range!</p>
   </main>
   <dialog id="win"><h2>🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
   <script>
-    const maxLevel = 11, $ = id => document.getElementById(id);
+    const RANGES = [10n, 25n, 50n, 100n, 250n, 500n, 1000n, 2500n, 5000n, 10000n, 25000n, 50000n, 100000n, 250000n, 500000n, 1000000n, 2500000n, 5000000n, 10000000n, 25000000n, 50000000n, 100000000n, 250000000n, 500000000n, 1000000000n, 2500000000n, 5000000000n, 10000000000n, 25000000000n, 50000000000n, 100000000000n, 250000000000n, 500000000000n, 999999999999n];
+    const maxLevel = RANGES.length, $ = id => document.getElementById(id);
     let level = 1, attempts = 0, score = 0, input = '', secret, finished = false;
     let installPrompt;
-    const limit = () => 10n ** BigInt(level + 1) - 1n;
+    const limit = () => RANGES[level - 1];
     const commas = n => n.toLocaleString('en-US');
     function randomTo(max) { // cryptographically random BigInt from 1 through max
       const bytes = Math.ceil(max.toString(2).length / 8), ceiling = 1n << BigInt(bytes * 8), cutoff = ceiling - (ceiling % max);
@@ -93,13 +94,13 @@
     function speak(words) { if ('speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(words)); } }
     function refresh() {
       $('level').textContent = level; $('attempts').textContent = attempts; $('score').textContent = score;
-      $('range').textContent = `1 to ${commas(limit())}`; $('power').textContent = `${level + 1} digits`;
+      $('range').textContent = `1 to ${commas(limit())}`; $('power').textContent = `Up to ${limit().toString().length} digits`;
       $('fill').style.width = `${(level / maxLevel) * 100}%`;
       $('display').textContent = input ? commas(BigInt(input)) : 'Tap the numbers below';
       $('display').classList.toggle('empty', !input);
     }
     function startRound() { secret = randomTo(limit()); attempts = 0; input = ''; finished = false; $('hint').textContent = 'Make your first guess!'; refresh(); }
-    function addDigit(d) { if (finished || input.length >= level + 1) return; input = input === '0' ? d : input + d; refresh(); }
+    function addDigit(d) { if (finished || input.length >= limit().toString().length) return; input = input === '0' ? d : input + d; refresh(); }
     function makeGuess() {
       if (finished || !input) { $('hint').textContent = 'Choose some digits first!'; speak('Choose some digits first'); return; }
       const value = BigInt(input);

@@ -58,9 +58,9 @@
     .progress { margin:17px 4px 0; }
     .progress-top { display:flex; justify-content:space-between; font-size:.83rem; font-weight:900; margin-bottom:6px; }
     .path { display:flex; align-items:center; justify-content:space-between; gap:2px; }
-    .step { display:grid; place-items:center; width:31px; height:31px; border-radius:50%; background:#d9d1e8; color:#8d82a5; font-size:.95rem; transition:.3s; }
-    .step.active { background:var(--yellow); color:#775400; transform:translateY(-3px) scale(1.12); box-shadow:0 4px 0 #d7a800; }
-    .step.current { outline:3px solid var(--purple); }
+    .step { display:grid; place-items:center; width:clamp(23px,7.3vw,31px); height:clamp(23px,7.3vw,31px); border-radius:50%; background:#d9d1e8; color:#8d82a5; font-size:clamp(.68rem,3.5vw,.95rem); filter:grayscale(1); opacity:.7; transition:.3s; }
+    .step.complete { background:#77e2bc; color:#145843; filter:none; opacity:1; box-shadow:0 3px 0 #42a681; }
+    .step.current { background:var(--yellow); color:#775400; filter:none; opacity:1; transform:translateY(-3px) scale(1.12); box-shadow:0 4px 0 #d7a800; outline:2px solid var(--purple); }
     dialog { width:min(430px,90vw); border:0; border-radius:27px; color:var(--ink); text-align:center; padding:28px 20px 22px; box-shadow:0 18px 55px #2b215a88; }
     dialog::backdrop { background:#25165388; backdrop-filter:blur(3px); }
     dialog h2 { font-size:2.1rem; margin:0 0 8px; }
@@ -107,7 +107,8 @@
   <div id="confetti" class="confetti" aria-hidden="true"></div>
   <dialog id="win"><h2 id="winTitle">🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
   <script>
-    const RANGES = [10n, 25n, 50n, 100n, 250n, 500n, 1000n, 2500n, 5000n, 10000n, 25000n, 50000n, 100000n, 250000n, 500000n, 1000000n, 2500000n, 5000000n, 10000000n, 25000000n, 50000000n, 100000000n, 250000000n, 500000000n, 1000000000n, 2500000000n, 5000000000n, 10000000000n, 25000000000n, 50000000000n, 100000000000n, 250000000000n, 500000000000n, 999999999999n];
+    const RANGES = [10n, 20n, 50n, 100n, 200n, 500n, 1000n, 2000n, 5000n, 10000n];
+    const JOURNEY_ICONS = ['🌱', '🌼', '🍀', '🗺️', '🗝️', '💎', '⛰️', '🚀', '🪐', '🏆'];
     const maxLevel = RANGES.length, $ = id => document.getElementById(id);
     let level = 1, attempts = 0, score = 0, input = '', secret, finished = false;
     let installPrompt, soundOn = true;
@@ -122,12 +123,12 @@
     function speak(words) { if (soundOn && 'speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(words)); } }
     function setHint(words, icon = '🔎') { $('hintText').textContent = words; $('clueIcon').textContent = icon; }
     function celebrate() { $('mascot').classList.remove('happy'); void $('mascot').offsetWidth; $('mascot').classList.add('happy'); $('confetti').innerHTML = Array.from({length:28}, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * .06}s"></i>`).join(''); setTimeout(() => $('confetti').innerHTML = '', 1400); }
-    function theme() { return limit() <= 100n ? 'garden' : limit() <= 1000000n ? 'cave' : 'space'; }
+    function theme() { return level <= 3 ? 'garden' : level <= 6 ? 'cave' : 'space'; }
     function refresh() {
       $('level').textContent = level; $('attempts').textContent = attempts; $('score').textContent = score;
       $('range').textContent = `1 to ${commas(limit())}`; $('power').textContent = `Up to ${limit().toString().length} digits`;
       document.body.dataset.theme = theme();
-      $('path').innerHTML = Array.from({length:7}, (_, i) => { const step = Math.ceil((i + 1) * maxLevel / 7); const done = level >= step; const current = Math.abs(level - step) < Math.ceil(maxLevel / 14); const mark = theme() === 'garden' ? '🌱' : theme() === 'cave' ? '💎' : '🪐'; return `<span class="step ${done ? 'active' : ''} ${current ? 'current' : ''}">${mark}</span>`; }).join('');
+      $('path').innerHTML = JOURNEY_ICONS.map((mark, i) => { const step = i + 1; const complete = step < level || (finished && step === level); const current = step === level && !finished; return `<span class="step ${complete ? 'complete' : ''} ${current ? 'current' : ''}" aria-label="Level ${step}: ${complete ? 'completed' : current ? 'current' : 'not started'}">${mark}</span>`; }).join('');
       $('display').innerHTML = input ? [...input].map(d => `<span class="tile">${d}</span>`).join('') : 'Tap the numbers below';
       $('display').classList.toggle('empty', !input);
     }

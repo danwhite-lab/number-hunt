@@ -13,9 +13,11 @@
   <style>
     :root { --ink:#18203c; --purple:#6547d8; --purple2:#8b65ff; --yellow:#ffd85a; --mint:#77e2bc; --pink:#ff7fa8; --paper:#fffdf8; }
     * { box-sizing:border-box; }
-    body { margin:0; min-height:100vh; color:var(--ink); font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif; background:radial-gradient(circle at 9% 10%,#fff0a7 0 8%,transparent 8.5%),radial-gradient(circle at 92% 16%,#d6c7ff 0 11%,transparent 11.5%),linear-gradient(145deg,#f5f0ff,#e8fbf4); }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif; background:linear-gradient(145deg,#dff9e7,#aee8bb); transition:background .7s; overflow-x:hidden; }
+    body[data-theme="cave"] { background:radial-gradient(circle at 20% 9%,#ffdb87 0 5%,transparent 5.5%),linear-gradient(145deg,#4e356b,#9a6282); }
+    body[data-theme="space"] { background:radial-gradient(circle at 10% 12%,#fff 0 1px,transparent 2px),radial-gradient(circle at 80% 26%,#fff 0 2px,transparent 3px),radial-gradient(circle at 58% 8%,#fff 0 1px,transparent 2px),linear-gradient(145deg,#151e56,#652871); }
     main { width:min(680px,100%); margin:auto; padding:22px 18px 36px; text-align:center; }
-    .brand { font-size:clamp(2rem,7vw,3.8rem); line-height:.95; letter-spacing:-.06em; margin:4px 0 4px; }
+    .brand { font-size:clamp(1.75rem,6vw,3rem); line-height:.95; letter-spacing:-.06em; margin:4px 0 4px; }
     .brand span { color:var(--purple); }
     .tagline { margin:0 0 18px; font-weight:800; color:#585875; }
     .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:14px; }
@@ -25,35 +27,52 @@
     .card { background:var(--paper); border:4px solid white; border-radius:28px; padding:17px; box-shadow:0 10px 0 #d9d0ed; }
     .range { font-size:clamp(1.1rem,4.2vw,1.45rem); font-weight:900; margin:0; }
     .range strong { color:var(--purple); }
-    .hint { min-height:60px; margin:11px 0 10px; display:grid; place-content:center; color:#fff; background:var(--purple); border-radius:18px; font-size:clamp(1.3rem,5.4vw,1.95rem); font-weight:900; line-height:1.1; padding:8px 14px; }
-    .guess-display { min-height:67px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:3px dashed #c8bcea; border-radius:17px; background:#f9f6ff; font-size:clamp(2rem,9vw,3.6rem); letter-spacing:.04em; font-weight:900; color:var(--ink); padding:4px 12px; }
+    .hero { min-height:112px; margin:11px 0 10px; display:grid; grid-template-columns:86px 1fr; align-items:center; gap:5px; color:#fff; background:linear-gradient(135deg,#6547d8,#8b65ff); border-radius:22px; font-size:clamp(1.35rem,5.4vw,2rem); font-weight:900; line-height:1.05; padding:10px 14px 10px 6px; box-shadow:inset 0 -5px #4932a5; }
+    .mascot { font-size:4.4rem; filter:drop-shadow(0 5px 0 #4932a5); transform-origin:50% 85%; transition:transform .25s; }
+    .mascot.happy { animation:dance .55s ease-in-out 3; }
+    .clue-icon { display:block; font-size:1.6rem; margin-bottom:3px; }
+    .hint-text { display:block; }
+    .guess-display { min-height:78px; display:flex; align-items:center; justify-content:center; gap:5px; overflow:hidden; border:3px dashed #c8bcea; border-radius:17px; background:#f9f6ff; color:var(--ink); padding:8px 12px; }
     .guess-display.empty { color:#a8a0be; font-size:1.2rem; letter-spacing:0; }
+    .tile { display:inline-grid; place-items:center; min-width:42px; height:55px; padding:0 8px; border-radius:11px; color:#4b328e; background:linear-gradient(145deg,#fff,#ded2ff); border:2px solid #baa6f3; box-shadow:0 4px 0 #9f87dd; font-size:clamp(2rem,8vw,3.3rem); font-weight:900; animation:pop .22s ease-out; }
     .pad { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:13px; }
     button { border:0; font:inherit; font-weight:900; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
     .key { min-height:58px; background:#eee8ff; color:var(--purple); border-radius:16px; box-shadow:0 4px 0 #c5b5ee; font-size:1.7rem; }
+    .key:nth-child(3n+2) { background:#e5f8ef; color:#18845e; box-shadow:0 4px 0 #92d0b8; }
+    .key:nth-child(3n) { background:#fff0bc; color:#9d7200; box-shadow:0 4px 0 #edcc68; }
     .key:active,.action:active { transform:translateY(3px); box-shadow:0 1px 0 currentColor; }
-    .clear { font-size:1rem; background:#ffe1ea; color:#ba4167; box-shadow:0 4px 0 #f1a9be; }
-    .back { font-size:1.3rem; background:#fff0bc; color:#9d7200; box-shadow:0 4px 0 #edcc68; }
+    .back { grid-column:3; font-size:1.3rem; background:#ffe1ea !important; color:#ba4167 !important; box-shadow:0 4px 0 #f1a9be !important; }
+    .zero { grid-column:2; }
     .action-row { display:grid; grid-template-columns:1fr 2fr; gap:9px; margin-top:12px; }
     .action { min-height:61px; border-radius:17px; color:#fff; box-shadow:0 5px 0 #3e2b99; background:var(--purple); font-size:1.35rem; }
     .new { background:var(--mint); color:#164f3e; box-shadow:0 5px 0 #42a681; font-size:1rem; }
+    .sound { position:absolute; top:16px; right:16px; width:44px; height:44px; border-radius:50%; background:#fffdf8; color:#6547d8; box-shadow:0 4px 0 #b9a9e4; font-size:1.35rem; }
     .install { margin-top:12px; width:100%; min-height:47px; border-radius:14px; background:#fff0bc; color:#745400; box-shadow:0 4px 0 #edcc68; font-size:1rem; }
     .install[hidden] { display:none; }
     .progress { margin:17px 4px 0; }
     .progress-top { display:flex; justify-content:space-between; font-size:.83rem; font-weight:900; margin-bottom:6px; }
-    .track { height:13px; background:#ddd5ef; border-radius:20px; overflow:hidden; }
-    .fill { height:100%; width:9%; border-radius:inherit; background:linear-gradient(90deg,var(--yellow),var(--pink)); transition:width .35s; }
+    .path { display:flex; align-items:center; justify-content:space-between; gap:2px; }
+    .step { display:grid; place-items:center; width:31px; height:31px; border-radius:50%; background:#d9d1e8; color:#8d82a5; font-size:.95rem; transition:.3s; }
+    .step.active { background:var(--yellow); color:#775400; transform:translateY(-3px) scale(1.12); box-shadow:0 4px 0 #d7a800; }
+    .step.current { outline:3px solid var(--purple); }
     dialog { width:min(430px,90vw); border:0; border-radius:27px; color:var(--ink); text-align:center; padding:28px 20px 22px; box-shadow:0 18px 55px #2b215a88; }
     dialog::backdrop { background:#25165388; backdrop-filter:blur(3px); }
     dialog h2 { font-size:2.1rem; margin:0 0 8px; }
     dialog p { font-size:1.13rem; font-weight:700; line-height:1.45; }
     .next { width:100%; margin-top:5px; background:var(--purple); color:#fff; border-radius:16px; padding:15px; font-size:1.25rem; box-shadow:0 5px 0 #3e2b99; }
     .tiny { font-size:.83rem; color:#69627e; font-weight:700; margin:14px 0 0; }
+    .confetti { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:10; }
+    .confetti i { position:absolute; top:-20px; width:12px; height:18px; background:var(--yellow); animation:fall 1.1s linear forwards; }
+    .confetti i:nth-child(3n) { background:var(--pink); }.confetti i:nth-child(3n+1) { background:var(--mint); }
+    @keyframes pop { from { transform:scale(.45) rotate(-10deg); opacity:0; } to { transform:scale(1); opacity:1; } }
+    @keyframes dance { 0%,100% { transform:rotate(0); } 25% { transform:rotate(-13deg) translateY(-7px); } 75% { transform:rotate(13deg) translateY(-7px); } }
+    @keyframes fall { to { transform:translateY(110vh) rotate(540deg); opacity:.7; } }
     @media (min-width:650px) { main { padding-top:35px; } .card { padding:21px 33px; } .key { min-height:64px; } }
   </style>
 </head>
 <body>
   <main>
+    <button class="sound" id="sound" aria-label="Turn sounds off">🔊</button>
     <h1 class="brand">Secret <span>Number Hunt</span></h1>
     <p class="tagline">Can you crack the super-secret number?</p>
     <section class="stats" aria-label="Game status">
@@ -63,26 +82,27 @@
     </section>
     <section class="card" aria-label="Number guessing game">
       <p class="range">Find a number from <strong id="range">1 to 10</strong></p>
-      <div id="hint" class="hint" role="status" aria-live="polite">Make your first guess!</div>
+      <div id="hint" class="hero" role="status" aria-live="polite"><div id="mascot" class="mascot">🦊</div><div><span id="clueIcon" class="clue-icon">🔎</span><span id="hintText" class="hint-text">Make your first guess!</span></div></div>
       <div id="display" class="guess-display empty" aria-label="Your current guess">Tap the numbers below</div>
       <div class="pad" aria-label="Number pad">
         <button class="key" data-digit="1">1</button><button class="key" data-digit="2">2</button><button class="key" data-digit="3">3</button>
         <button class="key" data-digit="4">4</button><button class="key" data-digit="5">5</button><button class="key" data-digit="6">6</button>
         <button class="key" data-digit="7">7</button><button class="key" data-digit="8">8</button><button class="key" data-digit="9">9</button>
-        <button class="key clear" id="clear">Clear</button><button class="key" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
+        <button class="key zero" data-digit="0">0</button><button class="key back" id="back" aria-label="Erase last digit">⌫</button>
       </div>
       <div class="action-row"><button class="action new" id="newGame">New number</button><button class="action" id="guess">Make a guess!</button></div>
       <button class="install" id="install" hidden>📲 Put this game on my home screen</button>
-      <div class="progress"><div class="progress-top"><span>Number power</span><span id="power">Up to 2 digits</span></div><div class="track"><div id="fill" class="fill"></div></div></div>
+      <div class="progress"><div class="progress-top"><span>Number journey</span><span id="power">Up to 2 digits</span></div><div id="path" class="path" aria-label="Number journey progress"></div></div>
     </section>
     <p class="tiny">Tip: every new level brings a slightly bigger number range!</p>
   </main>
+  <div id="confetti" class="confetti" aria-hidden="true"></div>
   <dialog id="win"><h2>🎉 You found it!</h2><p id="winText"></p><button class="next" id="next">Next giant challenge →</button></dialog>
   <script>
     const RANGES = [10n, 25n, 50n, 100n, 250n, 500n, 1000n, 2500n, 5000n, 10000n, 25000n, 50000n, 100000n, 250000n, 500000n, 1000000n, 2500000n, 5000000n, 10000000n, 25000000n, 50000000n, 100000000n, 250000000n, 500000000n, 1000000000n, 2500000000n, 5000000000n, 10000000000n, 25000000000n, 50000000000n, 100000000000n, 250000000000n, 500000000000n, 999999999999n];
     const maxLevel = RANGES.length, $ = id => document.getElementById(id);
     let level = 1, attempts = 0, score = 0, input = '', secret, finished = false;
-    let installPrompt;
+    let installPrompt, soundOn = true;
     const limit = () => RANGES[level - 1];
     const commas = n => n.toLocaleString('en-US');
     function randomTo(max) { // cryptographically random BigInt from 1 through max
@@ -91,31 +111,36 @@
       do { const a = new Uint8Array(bytes); crypto.getRandomValues(a); value = a.reduce((n,b) => (n << 8n) + BigInt(b), 0n); } while (value >= cutoff);
       return value % max + 1n;
     }
-    function speak(words) { if ('speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(words)); } }
+    function speak(words) { if (soundOn && 'speechSynthesis' in window) { speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(words)); } }
+    function setHint(words, icon = '🔎') { $('hintText').textContent = words; $('clueIcon').textContent = icon; }
+    function celebrate() { $('mascot').classList.remove('happy'); void $('mascot').offsetWidth; $('mascot').classList.add('happy'); $('confetti').innerHTML = Array.from({length:28}, (_, i) => `<i style="left:${(i * 37) % 100}%;animation-delay:${(i % 7) * .06}s"></i>`).join(''); setTimeout(() => $('confetti').innerHTML = '', 1400); }
+    function theme() { return limit() <= 100n ? 'garden' : limit() <= 1000000n ? 'cave' : 'space'; }
     function refresh() {
       $('level').textContent = level; $('attempts').textContent = attempts; $('score').textContent = score;
       $('range').textContent = `1 to ${commas(limit())}`; $('power').textContent = `Up to ${limit().toString().length} digits`;
-      $('fill').style.width = `${(level / maxLevel) * 100}%`;
-      $('display').textContent = input ? commas(BigInt(input)) : 'Tap the numbers below';
+      document.body.dataset.theme = theme();
+      $('path').innerHTML = Array.from({length:7}, (_, i) => { const step = Math.ceil((i + 1) * maxLevel / 7); const done = level >= step; const current = Math.abs(level - step) < Math.ceil(maxLevel / 14); const mark = theme() === 'garden' ? '🌱' : theme() === 'cave' ? '💎' : '🪐'; return `<span class="step ${done ? 'active' : ''} ${current ? 'current' : ''}">${mark}</span>`; }).join('');
+      $('display').innerHTML = input ? [...input].map(d => `<span class="tile">${d}</span>`).join('') : 'Tap the numbers below';
       $('display').classList.toggle('empty', !input);
     }
-    function startRound() { secret = randomTo(limit()); attempts = 0; input = ''; finished = false; $('hint').textContent = 'Make your first guess!'; refresh(); }
+    function startRound() { secret = randomTo(limit()); attempts = 0; input = ''; finished = false; setHint('Make your first guess!', '🔎'); refresh(); }
     function addDigit(d) { if (finished || input.length >= limit().toString().length) return; input = input === '0' ? d : input + d; refresh(); }
     function makeGuess() {
-      if (finished || !input) { $('hint').textContent = 'Choose some digits first!'; speak('Choose some digits first'); return; }
+      if (finished || !input) { setHint('Choose some digits first!', '👆'); speak('Choose some digits first'); return; }
       const value = BigInt(input);
-      if (value < 1n || value > limit()) { $('hint').textContent = 'That number is outside the range!'; speak('That number is outside the range'); return; }
+      if (value < 1n || value > limit()) { setHint('That number is outside the range!', '🚧'); speak('That number is outside the range'); return; }
       attempts++;
       if (value === secret) {
         finished = true; const points = Math.max(25, (level * 160) - ((attempts - 1) * 15)); score += points;
-        $('hint').textContent = 'Exactly right!'; refresh();
+        setHint('Exactly right!', '🎉'); celebrate(); refresh();
         $('winText').innerHTML = `You found <b>${commas(secret)}</b> in <b>${attempts}</b> guesses and earned <b>${points}</b> points!`;
         $('win').showModal(); speak(`You found it! ${commas(secret)}. Amazing!`);
-      } else { const word = value < secret ? 'Bigger ↑' : 'Smaller ↓'; $('hint').textContent = word; input = ''; refresh(); speak(value < secret ? 'Try a bigger number' : 'Try a smaller number'); }
+      } else { const bigger = value < secret; setHint(bigger ? 'Go bigger!' : 'Go smaller!', bigger ? '🚀 ↑' : '🎈 ↓'); input = ''; refresh(); speak(bigger ? 'Try a bigger number' : 'Try a smaller number'); }
     }
     document.querySelectorAll('[data-digit]').forEach(b => b.onclick = () => addDigit(b.dataset.digit));
-    $('clear').onclick = () => { input = ''; refresh(); }; $('back').onclick = () => { input = input.slice(0,-1); refresh(); };
+    $('back').onclick = () => { input = input.slice(0,-1); refresh(); };
     $('guess').onclick = makeGuess; $('newGame').onclick = startRound;
+    $('sound').onclick = () => { soundOn = !soundOn; $('sound').textContent = soundOn ? '🔊' : '🔇'; $('sound').setAttribute('aria-label', soundOn ? 'Turn sounds off' : 'Turn sounds on'); if (!soundOn && 'speechSynthesis' in window) speechSynthesis.cancel(); };
     addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; $('install').hidden = false; });
     $('install').onclick = async () => { if (!installPrompt) return; installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; $('install').hidden = true; };
     if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));

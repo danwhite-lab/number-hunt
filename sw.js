@@ -1,4 +1,4 @@
-const CACHE = 'secret-number-hunt-v2';
+const CACHE = 'secret-number-hunt-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
